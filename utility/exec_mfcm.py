@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans as sklearnKMeans
 from experiment import *
-from datasets import selectDataset
+from datasets.datasets import selectDataset
 from timeit import default_timer as timer
 
 
