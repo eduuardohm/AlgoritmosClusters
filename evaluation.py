@@ -4,11 +4,13 @@ import warnings
 from sklearn.cluster import KMeans
 
 from methods.dash2002 import Dash2002
-from methods.mitra2002 import feature_selection
-from methods.maxvar import maxVar
-from methods.laplacian_score import laplacian_score
+from methods.FSFS import feature_selection
+from methods.MAXVAR import maxVar
+from methods.LS import laplacian_score
 from methods.VCSDFS import VCSDFS
 from methods.FMIUFS import ufs_FMI
+from methods.SRCFS import SRCFS
+from methods.DUFS import Model, DataSet
 
 from timeit import default_timer as timer
 from datasets.datasets import selectDataset
@@ -16,6 +18,13 @@ from utility.util import calculate_accuracy, run_filter
 from utility.exec_mfcm import exec_mfcm
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+def run_dufs(params, X, y):
+    model = Model(**params)
+    dataset = DataSet(**{'_data': np.asarray(X), '_labels': np.asarray(y)}, labeled=True)
+    
+    model.train(dataset, learning_rate=1, batch_size=X.shape[0], display_step=100, num_epoch=3000, labeled=True)
+    return model
 
 def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
     numVar = int(p * n_features)
@@ -53,6 +62,21 @@ def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
         features = ufs_FMI(X, lammda)
         features = features[:numVar]
         return X[:, features]
+    
+    elif method == 'srcfs':
+        para_K = 5
+        para_s = 20
+        para_m = 10
+
+        rankings, feaWeights = SRCFS(X, para_K=para_K, para_s=para_s, para_m=para_m)
+        rankings = rankings[:numVar]
+        return X[:, rankings]
+    
+    elif method == 'dufs':
+        prob_alpha = result.get_prob_alpha()
+        rankings = np.argsort(-prob_alpha)
+        
+        return X[:, rankings[:numVar]]
 
     elif method == 'varfilter':
         return run_filter('mean', X, result, numVar, nclusters)
@@ -80,16 +104,26 @@ def evaluate(indexData, pVar, mc, nRep, seed, selected_method):
     X, y, nclusters, dataset_name = selectDataset(indexData)
     n_samples, n_features = X.shape
 
+    ## Treinar modelos antes da execução do K-Means
+    if method == 'varfilter' or method == 'sumfilter':
+            result, mfcm_time, centers = exec_mfcm(indexData, mc, nRep)
+    elif method == 'dufs':
+        params = {
+        'lam': 1e-4,
+        'input_dim': X.shape[1],
+        'is_param_free_loss': True,
+        'knn': 2,
+        'fac': 5
+        }
+        result = run_dufs(params, X, y)
+    else: result = None
+
     print(f'*{"-"*30}* {dataset_name} - {selected_method.upper()} *{"-"*30}*\n') 
     print(f'Seed: {seed} | Samples: {n_samples} | Features: {n_features} | Clusters: {nclusters}\n\n')
 
     print('ari,nmi,sillhouette,db')
 
     for p in pVar:
-        if method == 'varfilter' or method == 'sumfilter':
-            result, mfcm_time, centers = exec_mfcm(indexData, mc, nRep)
-        else: result = None
-
         try:
             X_selected = run_feature_selection(selected_method, X, y, nclusters, p, n_features, result=result)
             log = run_kmeans_and_log(selected_method, X_selected, y, seed, log)
@@ -106,7 +140,8 @@ if __name__ == '__main__':
     nRep = 100
     datasets = [4]
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'varfilter', 'sumfilter']
+    # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
+    methods = ['dufs']
 
     for d in datasets:
         for method in methods:
