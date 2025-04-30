@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import warnings
 from sklearn.cluster import KMeans
 
-from methods.dash2002 import Dash2002
+from methods.FSEM import Dash2002
 from methods.FSFS import feature_selection
 from methods.MAXVAR import maxVar
 from methods.LS import laplacian_score

@@ -2,6 +2,10 @@ import numpy as np
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.neighbors import KNeighborsClassifier
 
+'''
+Feature Selection Based on Entropy Measure (FSEM)
+'''
+
 def euclidean_distance(xi, xj):
     return np.sqrt(np.sum(np.square(xj-xi)))
 
