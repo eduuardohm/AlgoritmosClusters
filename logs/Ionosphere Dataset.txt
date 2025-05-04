@@ -1,0 +1,11 @@
+
+Dataset: Ionosphere Dataset | N_samples: 351 | N_variaveis: 34 | N_clusters: 2
+Metodo: mean | MC: 5 | MFCM_Rep: 5 | Variaveis cortadas: 1
+
+Resultados do filtro:
+ARI: 0.16906343242371363
+NMI: 0.128158768457947
+Silhoutte: 0.26900259863858395
+DB: 1.671163885529387
+
+#################################################################

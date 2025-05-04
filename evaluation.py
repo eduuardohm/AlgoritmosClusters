@@ -1,186 +1,154 @@
-import os
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans as sklearnKMeans
-from literature_methods.dash2002 import Dash2002
-from literature_methods.mitra2002 import feature_selection
-from literature_methods.maxvar import maxVar
-from literature_methods.laplacian_score import laplacian_score
-from experiment import *
-from datasets import selectDataset
+import warnings
+from sklearn.cluster import KMeans
+
+from methods.FSEM import Dash2002
+from methods.FSFS import feature_selection
+# from methods.MAXVAR import maxVar
+from methods.LS import laplacian_score
+from methods.VCSDFS import VCSDFS
+from methods.FMIUFS import ufs_FMI
+from methods.SRCFS import SRCFS
+# from methods.DUFS import Model, DataSet
+
 from timeit import default_timer as timer
+from datasets.datasets import selectDataset
+from utility.util import calculate_accuracy, run_filter
+from utility.exec_mfcm import exec_mfcm
 
-def evaluate(indexData, pVar, mc, nRep, seed):
-    ## Loading Data
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
-    log = ''
+def run_dufs(params, X, y):
+    model = Model(**params)
+    dataset = DataSet(**{'_data': np.asarray(X), '_labels': np.asarray(y)}, labeled=True)
     
-    dataset, ref, nclusters, dataset_name = selectDataset(indexData)
-    n_samples, n_features = dataset.shape
+    model.train(dataset, learning_rate=1, batch_size=X.shape[0], display_step=100, num_epoch=3000, labeled=True)
+    return model
 
-    print(f'Dataset selecionado: {dataset_name}\n')
+def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
+    numVar = int(p * n_features)
 
-    log += f'*{"-"*30}* {dataset_name} *{"-"*30}*\n\n'
-    log += f'Seed: {seed}\n'
-    log += f'Dataset: {dataset_name} | n_samples: {n_samples} | n_features: {n_features} | n_clusters: {nclusters}\n'
-    log += 'Methods: MaxVar, LS, Mitra2002'
+    if method == 'maxvar':
+        features = maxVar(X, numVar)
+        return X[:, np.array(features, dtype='int32')]
 
-    # log += '\n\nParameters:\n'
+    elif method == 'ls':
+        features = laplacian_score(X, numVar)
+        return X[:, features]
+
+    elif method == 'mitra2002':
+        threshold = numVar
+        features = feature_selection(X, k=int(threshold))
+        return X[:, features]
+
+    elif method == 'dash2002':
+        threshold = numVar
+        model = Dash2002(X, threshold)
+        model.execute(X)
+        features = model.forward_selection()
+        return X[:, features]
+
+    elif method == 'vcsdfs':
+        XX = X.T @ X
+        XXX = XX @ XX
+        rho = 0.1
+        W, index, obj = VCSDFS(X, XX, XXX, rho, numVar, NITER=100)
+        features = index[:numVar]
+        return X[:, features]
+
+    elif method == 'fmiufs':
+        lammda = 0.5
+        features = ufs_FMI(X, lammda)
+        features = features[:numVar]
+        return X[:, features]
     
-    # log += '\nMFCM\n'
-    # log += f'MC: {mc} | nRep: {nRep}\n'
+    elif method == 'srcfs':
+        para_K = 5
+        para_s = 20
+        para_m = 10
 
-    # ## MFCM
-    # result, mfcm_time, centers = exec_mfcm(indexData, mc, nRep)
-    # print('MFCM executado.\n')
-
-    log += '\n\nRESULTS:\n\n'
-    log += "ari,nmi,sillhouette,db\n"
-
-    for p in pVar:
-        # print(f'Pvar: {p}\n')
-        numVar = int(p * n_features)
-
-        ## Métodos propostos
-
-        # start = timer()
-        # dataset_varfilter = run_filter('mean', dataset, result, ref, numVar, nclusters)
-        # end = timer()
-        # filvar_time = round(end - start, 4)
-
-        # start = timer()
-        # dataset_sumfilter = run_filter('var', dataset, result, ref, numVar, nclusters)
-        # end = timer()
-        # filsum_time = round(end - start, 4)
-
-        ## MaxVar
-
-        # start = timer()
-        # maxVar_features = maxVar(dataset, p)
-        # end = timer()
-        # maxvar_time = end - start
-        # print('MaxVar executado.')
-
-        ## Laplacian Score:
-
-        # start = timer()
-        # LS_features = laplacian_score(dataset, p)
-        # end = timer()
-        # ls_time = end - start
-        # print('LS executado.')
-
-        ## Dash2002
-
-        # threshold = 0.5 * n_features
-        # threshold = numVar
-        # start = timer()
-
-        # model = Dash2002(dataset, threshold)
-        # entropy = model.execute(dataset)
-        # dash_features = model.forward_selection()
-
-        # end = timer()
-        # dash_time = end - start
-        # print('Dash2002 executado.')
-
-        # log += f"Entropy: {entropy}\n"
-        # log += (f"Variáveis selecionadas: {dash_features}")
-
-        ## Mitra2002
-
-        # start = timer()
-        # mitra_features = feature_selection(dataset, k=int(threshold))
-        # # log += (f"Variáveis selecionadas: {mitra_features}")
-        # end = timer()
-        # mitra_time = end - start
-
-        # ## Feature selection
-        # X_maxvar = dataset[:, np.array(maxVar_features, dtype='int32')]
-        # X_LS = dataset[:, LS_features]
-        # #X_dash = dataset[:, dash_features]
-        # X_mitra = dataset[:, mitra_features]
-        # print('Mitra2002 executado.')
-
-        ## K Means
-        K = nclusters
-
-        og_Kmeans = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        og_Kmeans.fit(dataset)
-        y_pred_og = og_Kmeans.labels_
+        rankings, feaWeights = SRCFS(X, para_K=para_K, para_s=para_s, para_m=para_m)
+        rankings = rankings[:numVar]
+        return X[:, rankings]
+    
+    elif method == 'dufs':
+        prob_alpha = result.get_prob_alpha()
+        rankings = np.argsort(-prob_alpha)
         
-        # KMeansresultVar = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # KMeansresultVar.fit(dataset_varfilter)
-        # KMeansresultVar = KMeansresultVar.labels_
+        return X[:, rankings[:numVar]]
 
-        # KMeansresultSum = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # KMeansresultSum.fit(dataset_sumfilter)
-        # KMeansresultSum = KMeansresultSum.labels_
+    elif method == 'varfilter':
+        return run_filter('mean', X, result, numVar, nclusters)
 
-        # maxvar_Kmeans = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # maxvar_Kmeans.fit(X_maxvar)
-        # y_pred0 = maxvar_Kmeans.labels_
+    elif method == 'sumfilter':
+        return run_filter('var', X, result, numVar, nclusters)
 
-        # LS_KMeans = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # LS_KMeans.fit(X_LS)
-        # y_pred1 = LS_KMeans.labels_
+    else:
+        raise ValueError(f"Unknown method: {method}")
 
-        # mitra_Kmeans = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # mitra_Kmeans.fit(X_mitra)
-        # y_pred2 = mitra_Kmeans.labels_
 
-        # dash_Kmeans = sklearnKMeans(n_clusters=K, random_state=seed, n_init=10)
-        # dash_Kmeans.fit(X_dash)
-        # y_pred3 = dash_Kmeans.labels_
+def run_kmeans_and_log(method, X_selected, y, seed, log):
+    KMeansModel = KMeans(n_clusters=len(np.unique(y)), random_state=seed, n_init=10)
+    KMeansModel.fit(X_selected)
+    y_pred = KMeansModel.labels_
 
-        # print('KMeans executado.')
-
-        ## Metrics
-
-        # log += 'KMeans sem filtro:\n'
-        results = list(map(lambda x: round(x, 8), calculate_accuracy(y_pred_og, ref, None, dataset)))
-        log += (f'{results[0]},{results[1]},{results[2]},{results[3]}\n')
-
-        # log += '\nFiltro por Variância:\n'
-        # results = list(map(lambda x: round(x, 8), calculate_accuracy(KMeansresultVar, ref, None, dataset_varfilter)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(mfcm_time, 4)}s (MFCM), {filvar_time}s\n'
-
-        # log += '\nFiltro por Somatório:\n'
-        # results = list(map(lambda x: round(x, 8), calculate_accuracy(KMeansresultSum, ref, None, dataset_sumfilter)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(mfcm_time, 4)}s (MFCM), {filsum_time}s\n'
-
-        # log += '\nMaxVar:\n'
-        # results = list(map(lambda x: round(x, 8), calculate_accuracy(y_pred0, ref, None, X_maxvar)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(maxvar_time, 4)}s\n'
-
-        # log += '\nLS:\n'
-        # results = list(map(lambda x: round(x, 8), calculate_accuracy(y_pred1, ref, None, X_LS)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(ls_time, 4)}s\n'
-
-        # log += '\nMitra2002:\n'
-        # results = list(map(lambda x: round(x, 8),calculate_accuracy(y_pred2, ref, None, X_mitra)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(mitra_time, 4)}s\n'
-
-        # log += '\nDash2002:\n'
-        # results = list(map(lambda x: round(x, 8), calculate_accuracy(y_pred3, ref, None, X_dash)))
-        # log += f'ARI: {results[0]}  NMI: {results[1]}%  Silhouette: {results[2]}%  DB: {results[3]}  Time: {round(dash_time, 4)}s\n'
-
-    log += '\n'
+    results = list(map(lambda x: round(x, 8), calculate_accuracy(y_pred, y, None, X_selected)))
+    log += f"{results[0]},{results[1]},{results[2]},{results[3]}\n"
     return log
 
 
+def evaluate(indexData, pVar, mc, nRep, seed, selected_method):
+    log = ''
+
+    X, y, nclusters, dataset_name = selectDataset(indexData)
+    n_samples, n_features = X.shape
+
+    ## Treinar modelos antes da execução do K-Means
+    if method == 'varfilter' or method == 'sumfilter':
+            result, mfcm_time, centers = exec_mfcm(indexData, mc, nRep, seed)
+    elif method == 'dufs':
+        params = {
+        'lam': 1e-4,
+        'input_dim': X.shape[1],
+        'is_param_free_loss': True,
+        'knn': 2,
+        'fac': 5
+        }
+        result = run_dufs(params, X, y)
+    else: result = None
+
+    print(f'*{"-"*30}* {dataset_name} - {selected_method.upper()} *{"-"*30}*\n') 
+    print(f'Seed: {seed} | Samples: {n_samples} | Features: {n_features} | Clusters: {nclusters}\n\n')
+
+    print('ari,nmi,sillhouette,db')
+
+    for p in pVar:
+        try:
+            X_selected = run_feature_selection(selected_method, X, y, nclusters, p, n_features, result=result)
+            log = run_kmeans_and_log(selected_method, X_selected, y, seed, log)
+        except Exception as e:
+            log += f"Erro ao rodar {selected_method.upper()} com p={p}: {e}\n"
+
+    return log
+
 if __name__ == '__main__':
-    log_file = open('logs/evaluation_classic_methods.txt', 'a', newline='\n')
+    # log_file = open('logs/evaluation_classic_methods.txt', 'a', newline='\n')
+    log_file = open('logs/Madelon.txt', 'a', newline='\n')
 
     SEED = 42
-    nRep = 10
-    
-    datasets = [19, 20, 21]
+    nRep = 100
+    datasets = [20]
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
+    # methods = ['dufs']
+    methods = ['varfilter', 'sumfilter']
 
     for d in datasets:
-        log = evaluate(d, pVars, 1, nRep, SEED)
-        print(log + '\n')
-        # log_file.write(log)
+        for method in methods:
+            log = evaluate(d, pVars, 1, nRep, SEED, method)
+            print(log)
+            log_file.write(log)
 
     print(f"\n{'-'*30}> Done <{'-'*30}")
     log_file.close()

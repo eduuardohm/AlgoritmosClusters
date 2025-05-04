@@ -1,16 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from metrics import FR_Index
+from utility.metrics import FR_Index
 from sklearn.metrics import f1_score, davies_bouldin_score, silhouette_score, normalized_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
 import random
 import time
 
-from datasets import selectDataset
-from FCM import FCM
-from MFCM import MFCM
-from KMeans import KMeans
-from filters import *
+from datasets.datasets import selectDataset
+from algorithms.FCM import FCM
+from algorithms.MFCM import MFCM
+from algorithms.KMeans import KMeans
+from methods.filters import *
 
 SEED = 42
 np.random.seed(SEED)
@@ -45,7 +45,7 @@ def execute(nRep, dataset, centersAll, exec_time):
 	
 	return dict
 
-def exec_mfcm(indexData, mc, nRep):
+def exec_mfcm(indexData, mc, nRep, seed):
 
 	## Inicializando variáveis
 	exec_time = 0
@@ -55,9 +55,8 @@ def exec_mfcm(indexData, mc, nRep):
 
 	## Monte Carlo
 	for i in range(mc):
-		SEED = int(time.time())
-		np.random.seed(SEED)
-		random.seed(SEED)
+		np.random.seed(seed)
+		random.seed(seed)
 
 		synthetic = selectDataset(indexData)
 		dataset = synthetic[0]
@@ -257,7 +256,7 @@ def atualizaTxt(nome, lista):
 if __name__ == "__main__":
 	mc = 5
 	nRep = 5
-	indexData = 23
+	indexData = 6
 	numVar = 1
 
 	# result, ref, centers = experiment(indexData, mc, nRep, numVar, 'mean')
