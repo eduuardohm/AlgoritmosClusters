@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
@@ -130,15 +131,15 @@ def evaluate(indexData, pVar, mc, nRep, seed, selected_method):
         except Exception as e:
             log += f"Erro ao rodar {selected_method.upper()} com p={p}: {e}\n"
 
-    return log
+    return log, dataset_name
 
 if __name__ == '__main__':
     # log_file = open('logs/evaluation_classic_methods.txt', 'a', newline='\n')
-    log_file = open('logs/Madelon.txt', 'a', newline='\n')
+    # log_file = open('logs/COIL20.txt', 'a', newline='\n')
 
     SEED = 42
     nRep = 100
-    datasets = [20]
+    datasets = [10]
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
     # methods = ['dufs']
@@ -146,9 +147,19 @@ if __name__ == '__main__':
 
     for d in datasets:
         for method in methods:
-            log = evaluate(d, pVars, 1, nRep, SEED, method)
+            log, dataset_name = evaluate(d, pVars, 1, nRep, SEED, method)
             print(log)
+            metrics = 'ari,nmi,sillhouette,db'
+
+            data_execucao = "08_05_2025"
+            if not os.path.exists(f'logs/{data_execucao}'):
+                os.makedirs(f'logs/{data_execucao}', exist_ok=True)
+    
+            log_file = open(f'logs/{data_execucao}/{dataset_name}.txt', 'a', newline='\n')
+            log_file.write(f"{method.upper()} - {dataset_name} - {metrics}\n")
             log_file.write(log)
+            log_file.write('\n')
+            log_file.write(f"{'='*30}\n")
+            log_file.close()
 
     print(f"\n{'-'*30}> Done <{'-'*30}")
-    log_file.close()
