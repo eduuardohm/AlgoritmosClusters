@@ -434,6 +434,57 @@ def selectDataset(id):
 		data_ref = np.concatenate((np.repeat(1, n // n_classes), np.repeat(2, n // n_classes), np.repeat(3, n // n_classes)))
 
 		return [synthetic, data_ref, n_classes, "Relacao Exponencial"]
+	elif id == 26:
+		path = os.path.join(current_dir, "datasets/warpAR10P.mat")
+		mat = loadmat(path)
+		scaler = StandardScaler()
+
+		X = mat['X']           # shape (130, 2400)
+		Y = mat['Y'].flatten() # shape (130,)
+
+		dataset = pd.DataFrame(X)
+		data_ref = [int(label) - 1 for label in Y.tolist()]
+
+		dataset_unlabeled = dataset.to_numpy()
+
+		nClusters = 10
+
+		dataset_unlabeled = scaler.fit_transform(dataset_unlabeled)
+		return [dataset_unlabeled, data_ref, nClusters, "AR10P Dataset"]
+	elif id == 27:
+		path = os.path.join(current_dir, "datasets/warpPIE10P.mat")
+		mat = loadmat(path)
+		scaler = StandardScaler()
+
+		X = mat['X']           # shape (210, 2420)
+		Y = mat['Y'].flatten() # shape (210,)
+
+		dataset = pd.DataFrame(X)
+		data_ref = [int(label) - 1 for label in Y.tolist()]
+
+		dataset_unlabeled = dataset.to_numpy()
+
+		nClusters = 10
+
+		dataset_unlabeled = scaler.fit_transform(dataset_unlabeled)
+		return [dataset_unlabeled, data_ref, nClusters, "PIE10P Dataset"]
+	elif id == 28:
+		path = os.path.join(current_dir, "datasets/TOX_171.mat")
+		mat = loadmat(path)
+		scaler = StandardScaler()
+
+		X = mat['X']           # shape (171, 5748)
+		Y = mat['Y'].flatten() # shape (171,)
+
+		dataset = pd.DataFrame(X)
+		data_ref = [int(label) - 1 for label in Y.tolist()]
+
+		dataset_unlabeled = dataset.to_numpy()
+
+		nClusters = 4
+
+		dataset_unlabeled = scaler.fit_transform(dataset_unlabeled)
+		return [dataset_unlabeled, data_ref, nClusters, "TOX-171 Dataset"]
 	
 def normalize(dataset):
 	nRows = dataset.shape[0]

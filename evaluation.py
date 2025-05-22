@@ -9,13 +9,13 @@ from torch.utils import data
 
 from methods.FSEM import Dash2002
 from methods.FSFS import feature_selection
-# from methods.MAXVAR import maxVar
+from methods.MAXVAR import maxVar
 from methods.LS import laplacian_score
 from methods.VCSDFS import VCSDFS
 from methods.FMIUFS import ufs_FMI
 from methods.SRCFS import SRCFS
 import lscae
-# from methods.DUFS import Model, DataSet
+from methods.DUFS import Model, DataSet
 
 from timeit import default_timer as timer
 from datasets.datasets import selectDataset
@@ -176,10 +176,11 @@ if __name__ == '__main__':
 
     SEED = 42
     nRep = 100
-    datasets = [14]
+    # datasets = [4, 6, 7, 9, 10, 11, 13, 14, 15]
+    datasets = [26, 27, 28]
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
-    methods = ['lscae']
+    methods = ['dufs','vcsdfs', 'fmiufs', 'srcfs', 'lscae']
     # methods = ['varfilter', 'sumfilter']
 
     for d in datasets:
@@ -188,7 +189,7 @@ if __name__ == '__main__':
             print(log)
             metrics = 'ari,nmi,sillhouette,db'
 
-            data_execucao = "08_05_2025"
+            data_execucao = "22_05_2025"
             if not os.path.exists(f'logs/{data_execucao}'):
                 os.makedirs(f'logs/{data_execucao}', exist_ok=True)
     
