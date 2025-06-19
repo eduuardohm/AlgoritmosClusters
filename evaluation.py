@@ -33,6 +33,8 @@ def run_dufs(params, X, y):
 
 def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
     numVar = int(p * n_features)
+    if numVar < 1:
+        numVar = 1
 
     if method == 'maxvar':
         features = maxVar(X, numVar)
