@@ -10,7 +10,9 @@ from torch.utils import data
 from methods.FSEM import Dash2002
 from methods.FSFS import feature_selection
 from methods.MAXVAR import maxVar
-from methods.LS import laplacian_score
+from methods.LS import lap_score
+from methods.MCFS import mcfs
+from methods.UDFS import udfs
 from methods.VCSDFS import VCSDFS
 from methods.FMIUFS import ufs_FMI
 from methods.SRCFS import SRCFS
@@ -41,7 +43,19 @@ def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
         return X[:, np.array(features, dtype='int32')]
 
     elif method == 'ls':
-        features = laplacian_score(X, numVar)
+        l_scores = lap_score(X)
+        features = np.argsort(l_scores)[:numVar]
+        return X[:, features]
+    
+    elif method == 'mcfs':
+        W = mcfs(X, n_selected_features=numVar, n_clusters=nclusters)
+        features = np.argsort(W.max(axis=1))[::-1][:numVar]
+        return X[:, features]
+    
+    elif method == 'udfs':
+        W = udfs(X, n_clusters=nclusters, k=5, gamma=0.1)
+        norms = np.linalg.norm(W, axis=1)
+        features = np.argsort(norms)[::-1][:numVar]
         return X[:, features]
 
     elif method == 'mitra2002':
@@ -179,10 +193,12 @@ if __name__ == '__main__':
     SEED = 42
     nRep = 100
     # datasets = [4, 6, 7, 9, 10, 11, 13, 14, 15]
-    datasets = [26, 27, 28]
+    datasets = [9, 10, 11, 14, 15, 7, 4, 13]
+    # datasets = [26, 27, 28]
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
-    methods = ['dufs','vcsdfs', 'fmiufs', 'srcfs', 'lscae']
+    # methods = ['dufs','vcsdfs', 'fmiufs', 'srcfs', 'lscae']
+    methods = ['ls', 'udfs']
     # methods = ['varfilter', 'sumfilter']
 
     for d in datasets:
@@ -191,7 +207,7 @@ if __name__ == '__main__':
             print(log)
             metrics = 'ari,nmi,sillhouette,db'
 
-            data_execucao = "22_05_2025"
+            data_execucao = "Teste"
             if not os.path.exists(f'logs/{data_execucao}'):
                 os.makedirs(f'logs/{data_execucao}', exist_ok=True)
     

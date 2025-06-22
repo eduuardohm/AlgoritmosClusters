@@ -1,7 +1,7 @@
 import numpy as np
-from numba import jit, cuda
+# from numba import jit, cuda
 
-@jit(target_backend='cuda')
+# @jit(target_backend='cuda')
 def maxVar(dataset, n_selected_features):
     n_samples, n_features = dataset.shape
     features = []
