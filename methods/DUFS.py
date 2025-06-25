@@ -2,6 +2,9 @@
 import os
 import numpy as np
 
+# Desativando uso da GPU
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 import scipy
 from scipy.spatial.distance import squareform
 from scipy.spatial.distance import pdist
@@ -401,8 +404,8 @@ class Model(object):
             precision_arr.append(precision)
            
             if (epoch+1) % self.display_step == 0:
-                # print("Epoch:", '%04d' % (epoch+1), "loss=", "{:.9f}".format(avg_loss), "score=", "{:.9f}".format(avg_score)\
-                #       ,"reg=", "{:.9f}".format(reg_fs) )
+                print("Epoch:", '%04d' % (epoch+1), "loss=", "{:.9f}".format(avg_loss), "score=", "{:.9f}".format(avg_score)\
+                      ,"reg=", "{:.9f}".format(reg_fs) )
                 
                 if labeled:
                     

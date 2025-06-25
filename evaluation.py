@@ -207,7 +207,7 @@ if __name__ == '__main__':
             print(log)
             metrics = 'ari,nmi,sillhouette,db'
 
-            data_execucao = "Teste"
+            data_execucao = "23_06_2025"
             if not os.path.exists(f'logs/{data_execucao}'):
                 os.makedirs(f'logs/{data_execucao}', exist_ok=True)
     
