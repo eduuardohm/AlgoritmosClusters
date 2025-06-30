@@ -193,12 +193,15 @@ if __name__ == '__main__':
     SEED = 42
     nRep = 100
     # datasets = [4, 6, 7, 9, 10, 11, 13, 14, 15]
-    datasets = [9, 10, 11, 14, 15, 7, 4, 13]
-    # datasets = [26, 27, 28]
+    # datasets = [9, 10, 11, 14, 15, 7, 4, 13]
+    # datasets = [3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 15, 19, 20, 21, 22, 26, 27, 28] # Todos os datasets que testamos
+    # datasets = [21, 22, 8] 
+    datasets = [21] 
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
-    # methods = ['dufs','vcsdfs', 'fmiufs', 'srcfs', 'lscae']
-    methods = ['ls', 'udfs']
+    # methods = ['vcsdfs', 'fmiufs', 'srcfs']
+    methods = ['fmiufs', 'srcfs']
+    # methods = ['ls', 'mcfs', 'udfs']
     # methods = ['varfilter', 'sumfilter']
 
     for d in datasets:
@@ -207,7 +210,7 @@ if __name__ == '__main__':
             print(log)
             metrics = 'ari,nmi,sillhouette,db'
 
-            data_execucao = "23_06_2025"
+            data_execucao = "26_06_2025"
             if not os.path.exists(f'logs/{data_execucao}'):
                 os.makedirs(f'logs/{data_execucao}', exist_ok=True)
     
