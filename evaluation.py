@@ -17,7 +17,7 @@ from methods.VCSDFS import VCSDFS
 from methods.FMIUFS import ufs_FMI
 from methods.SRCFS import SRCFS
 import lscae
-from methods.DUFS import Model, DataSet
+# from methods.DUFS import Model, DataSet
 
 from timeit import default_timer as timer
 from datasets.datasets import selectDataset
@@ -26,17 +26,20 @@ from utility.exec_mfcm import exec_mfcm
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-def run_dufs(params, X, y):
-    model = Model(**params)
-    dataset = DataSet(**{'_data': np.asarray(X), '_labels': np.asarray(y)}, labeled=True)
+# def run_dufs(params, X, y):
+#     model = Model(**params)
+#     dataset = DataSet(**{'_data': np.asarray(X), '_labels': np.asarray(y)}, labeled=True)
     
-    model.train(dataset, learning_rate=1, batch_size=X.shape[0], display_step=100, num_epoch=3000, labeled=True)
-    return model
+#     model.train(dataset, learning_rate=1, batch_size=X.shape[0], display_step=100, num_epoch=3000, labeled=True)
+#     return model
 
 def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
     numVar = int(p * n_features)
     if numVar < 1:
         numVar = 1
+
+    if method == 'baseline':
+        return X
 
     if method == 'maxvar':
         features = maxVar(X, numVar)
@@ -161,15 +164,15 @@ def evaluate(indexData, pVar, mc, nRep, seed, selected_method):
     ## Treinar modelos antes da execução do K-Means
     if method == 'varfilter' or method == 'sumfilter':
             result, mfcm_time, centers = exec_mfcm(indexData, mc, nRep, seed)
-    elif method == 'dufs':
-        params = {
-        'lam': 1e-4,
-        'input_dim': X.shape[1],
-        'is_param_free_loss': True,
-        'knn': 2,
-        'fac': 5
-        }
-        result = run_dufs(params, X, y)
+    # elif method == 'dufs':
+    #     params = {
+    #     'lam': 1e-4,
+    #     'input_dim': X.shape[1],
+    #     'is_param_free_loss': True,
+    #     'knn': 2,
+    #     'fac': 5
+    #     }
+    #     result = run_dufs(params, X, y)
     else: result = None
 
     print(f'*{"-"*30}* {dataset_name} - {selected_method.upper()} *{"-"*30}*\n') 
@@ -192,16 +195,12 @@ if __name__ == '__main__':
 
     SEED = 42
     nRep = 100
-    # datasets = [4, 6, 7, 9, 10, 11, 13, 14, 15]
-    # datasets = [9, 10, 11, 14, 15, 7, 4, 13]
-    # datasets = [3, 4, 6, 7, 8, 9, 11, 13, 14, 15, 19, 20, 21, 22, 26, 27, 28] # Todos os datasets que testamos
-    # datasets = [21, 22, 8] 
-    # datasets = [15, 9, 8] 
-    datasets = [8] 
+    datasets = [3, 4, 6, 7, 9, 11, 13, 14, 15, 19, 20, 26, 27, 28] # Todos os datasets que testamos
+    # datasets = [6] 
     pVars = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     # methods = ['maxvar', 'ls', 'mitra2002', 'dash2002', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
     # methods = ['ls', 'mcfs', 'udfs', 'vcsdfs', 'fmiufs', 'srcfs', 'varfilter', 'sumfilter']
-    methods = ['fmiufs']
+    methods = ['baseline']
     # methods = ['vcsdfs', 'fmiufs', 'srcfs']
     # methods = ['fmiufs', 'srcfs']
     # methods = ['ls', 'mcfs', 'udfs']
@@ -213,7 +212,7 @@ if __name__ == '__main__':
             print(log)
             metrics = 'ari,nmi,sillhouette,db'
 
-            data_execucao = "02_07_2025"
+            data_execucao = "Baseline"
             if not os.path.exists(f'logs/{data_execucao}'):
                 os.makedirs(f'logs/{data_execucao}', exist_ok=True)
     
