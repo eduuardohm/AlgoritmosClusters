@@ -2,50 +2,109 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns # type: ignore
+import scienceplots
+from itertools import cycle
 
-# Estilo Seaborn para gráficos mais bonitos
-sns.set(style="whitegrid")
+# Estilizando os gráficos
+# sns.set(style="whitegrid")
+plt.rcParams['text.usetex'] = False
+plt.style.use(['science'])
+colors = plt.get_cmap('tab10').colors
+markers = ['s'] * 9
 
 # Variáveis
 x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-y_labels = ['Adjusted Rand Index (ARI)', 'Normalized Mutual Information (NMI)', 'Silhouette Score', 'Davies-Bouldin Score (DB)']
-dataset_names = ['Hiva']
-datasets = ['Hiva']
+y_labels = [
+    'Adjusted Rand Index (ARI)',
+    'Normalized Mutual Information (NMI)',
+    'Silhouette Score',
+    'Davies-Bouldin Score (DB)'
+]
 
-for j, dataset in enumerate(datasets):
-    path = 'csv/' + dataset
-    mf_m = pd.read_csv(path + '/MF_M.csv')
-    mf_v = pd.read_csv(path + '/MF_V.csv')
-    maxvar = pd.read_csv(path + '/MAXVAR.csv')
-    ls = pd.read_csv(path + '/LS.csv')
-    fsfs = pd.read_csv(path + '/FSFS.csv')
-    mcfs = pd.read_csv(path + '/MCFS.csv')
-    udfs = pd.read_csv(path + '/UDFS.csv')
-    baseline = pd.read_csv(path + '/BASELINE.csv')
-    
-    methods = {'MF_M': mf_m, 'MF_V': mf_v, 'MaxVar': maxvar, 'LS': ls, 'FSFS': fsfs, 'MCFS': mcfs, 'UDFS': udfs, 'Baseline': baseline}
-    colors = ['b', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray']
-    markers = ['o', 'v', 's', 'p', '*', 'X', 'D', 'd']
-    
-    for i in range(4):  # Um gráfico por métrica
+label_map = {
+    'MF_M': 'MF-M', 'MF_V': 'MF-V', 'LS': 'Laplacian Score', 'MCFS': 'MCFS',
+    'UDFS': 'UDFS', 'DUFS': 'DUFS', 'VCSDFS': 'VCSDFS', 'FMIUFS': 'FMIUFS', 'Baseline': 'Baseline'
+}
+
+def load_data(dataset_name):
+    path = f'results/{dataset_name}'
+    return {
+        'MF_M': pd.read_csv(f'{path}/MF_M.csv'),
+        'MF_V': pd.read_csv(f'{path}/MF_V.csv'),
+        'LS': pd.read_csv(f'{path}/LS.csv'),
+        'MCFS': pd.read_csv(f'{path}/MCFS.csv'),
+        'UDFS': pd.read_csv(f'{path}/UDFS.csv'),
+        'DUFS': pd.read_csv(f'{path}/DUFS.csv'),
+        'VCSDFS': pd.read_csv(f'{path}/VCSDFS.csv'),
+        'FMIUFS': pd.read_csv(f'{path}/FMIUFS.csv'),
+        'Baseline': pd.read_csv(f'{path}/BASELINE.csv'),
+    }
+
+def plot_metrics_separately(x, dataset_name, dataset_label):
+    methods = load_data(dataset_name)
+
+    for i in range(4):
         plt.figure(figsize=(8, 6))
 
         for idx, (label, data) in enumerate(methods.items()):
-            plt.plot(x, data.iloc[:, i], label=label, color=colors[idx], marker=markers[idx], markersize=8, linewidth=2)
+            style = {'linestyle': '--', 'marker': '', 'color': 'black'} if label == 'Baseline' else {
+                'marker': markers[idx], 'color': colors[idx]
+            }
 
-        plt.xlabel('Percentage (%) of features', fontsize=12, weight='bold')
+            plt.plot(
+                x, data.iloc[:, i], label=label_map[label],
+                markersize=6, linewidth=2, **style
+            )
+
+        plt.xlabel('Percentage (\%) of features selected', fontsize=12, weight='bold')
         plt.ylabel(y_labels[i], fontsize=12, weight='bold')
-        plt.title(f'{dataset_names[j]} Dataset - {y_labels[i]}', fontsize=14, weight='bold')
-
-        # Estilizando o gráfico
-        plt.xticks(fontsize=10)
+        plt.title(f'{dataset_label} Dataset', fontsize=14, weight='bold')
+        plt.xticks(ticks=x, labels=[f'{int(v*100)}%' for v in x], fontsize=10)
         plt.yticks(fontsize=10)
-        plt.grid(True)
-        plt.legend(loc='lower right', fontsize=10)  # Ajustar a posição da legenda
-
-        # Ajustando o formato dos ticks do eixo x para ficarem em porcentagem
-        plt.gca().xaxis.set_major_formatter(mtick.PercentFormatter(1.0))
-
-        # Exibir o gráfico
+        plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+        plt.legend(loc='best', fontsize=10)
         plt.tight_layout()
         plt.show()
+    
+def plot_metrics_together(x, dataset_name, dataset_label):
+    methods = load_data(dataset_name)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+    axes = axes.flatten()
+
+    for i in range(4):
+        ax = axes[i]
+
+        for idx, (label, data) in enumerate(methods.items()):
+            style = {'linestyle': '--', 'marker': '', 'color': 'black'} if label == 'Baseline' else {
+                'marker': markers[idx], 'color': colors[idx]
+            }
+
+            ax.plot(
+                x, data.iloc[:, i], label=label_map[label],
+                markersize=5, linewidth=2, **style
+            )
+
+        ax.set_xlabel('Percentage (\%) of features selected', fontsize=10)
+        ax.set_ylabel(y_labels[i], fontsize=10)
+        # ax.set_title(y_labels[i], fontsize=11, weight='bold')
+        ax.set_title(f'{y_labels[i]} performance', fontsize=11, weight='bold')
+        ax.set_xticks(x)
+        ax.set_xticklabels([f'{int(v*100)}%' for v in x], fontsize=9)
+        ax.set_yticks(ax.get_yticks())
+        ax.tick_params(axis='y', labelsize=9)
+        ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+
+    # Ajustar a legenda fora do gráfico
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc='lower center', ncol=5, fontsize=10, frameon=False)
+    fig.suptitle(f'{dataset_label} Dataset', fontsize=14, weight='bold')
+    plt.tight_layout(rect=[0, 0.05, 1, 0.95])  # espaço para legenda e título
+    plt.show()
+
+if __name__ == "__main__":
+    x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    dataset_name = 'Zoo'
+    dataset_label = 'Zoo'
+
+    # plot_metrics_separately(x, dataset_name, dataset_label)
+    plot_metrics_together(x, dataset_name, dataset_label)

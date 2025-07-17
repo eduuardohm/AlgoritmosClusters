@@ -274,7 +274,7 @@ def selectDataset(id):
 
 		return [dataset_unlabeled, dataset_ref, nClusters, "Balance Dataset"]
 	elif id == 19:
-		# Scene | OPENML: ID 312 | 300 features | 2407 instances
+		# Scene | OPENML: ID 312 | 294 features | 2407 instances
 		path = os.path.join(current_dir, "datasets/scene.arff")
 		data = arff.loadarff(path)
 		
@@ -292,7 +292,7 @@ def selectDataset(id):
 		
 		return [dataset_unlabeled, dataset_ref, nClusters, "Scene Dataset"]
 	elif id == 20:
-		# Madelon | OPENML: ID 1485 | 500 features | 4400 instances
+		# Madelon | OPENML: ID 1485 | 500 features | 2600 instances
 		path = os.path.join(current_dir, "datasets/madelon.arff")
 		data = arff.loadarff(path)
 		dataset = pd.DataFrame(data[0])
@@ -308,7 +308,7 @@ def selectDataset(id):
 				
 		return [dataset_unlabeled, dataset_ref, nClusters, "Madelon Dataset"]
 	elif id == 21:
-		# Hiva Agnostic | OPENML: ID 1039 | 1000 features
+		# Hiva Agnostic | OPENML: ID 1039 | 1617 features | 4229 instances
 		path = os.path.join(current_dir, "datasets/hiva_agnostic.arff")
 		data = arff.loadarff(path)
 		dataset = pd.DataFrame(data[0])
@@ -324,7 +324,7 @@ def selectDataset(id):
 		
 		return [dataset_unlabeled, dataset_ref, nClusters, "Hiva Agnostic Dataset"]
 	elif id == 22:
-		# Musk (Version 1) | UCI Machine Learning Repository | 165 features | 476 Instances
+		# Musk (Version 1) | UCI Machine Learning Repository | 168 features | 476 Instances
 		path = os.path.join(current_dir, "datasets/musk1.data")
 		dataset = pd.read_csv(path, header=None)
 		dataset = dataset.drop(dataset.columns[[0, 1, -1]], axis=1)
