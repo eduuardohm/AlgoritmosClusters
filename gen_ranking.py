@@ -1,17 +1,20 @@
 import pandas as pd
+import re
 import os
 from scipy.stats import rankdata
 
 # Lista de datasets e métodos
-datasets = ['COIL20', 'AR10P', 'PIE10P', 'TOX171', 'Sonar', 'Wine', 'Ionosphere', 'WDBC']
+datasets = ['AR10P', 'COIL20', 'Heart-Statlog', 'Ionosphere', 'Lymphography', 'Madelon', 'PIE10P', 'Scene', 'Sonar', 'TOX171', 'WDBC', 'Wine', 'Zoo']
 caminho_base = 'results/'
-metodos = ["MF_M", "MF_V", "VCSDFS", "FMIUFS", "SRCFS", "LSCAE"]
-metricas = ["ari", "nmi", "sillhouette", "db"]
+metodos = ["BASELINE", "LS", "MCFS", "UDFS", "DUFS", "VCSDFS", "FMIUFS", "SRCFS", "MF_M", "MF_V"]
+metricas = ["sillhouette", "db"]
 
 # Dicionário para armazenar resultados por métrica
 tabelas_resultado = {métrica: {} for métrica in metricas}
 
 for dataset in datasets:
+    colored_dataset_name = colored_rank = f"\033[92m{dataset}\033[0m"
+    print(f'\nDataset: {colored_dataset_name}')
     dados_metodos = {}
 
     for metodo in metodos:
@@ -24,11 +27,10 @@ for dataset in datasets:
             dados_metodos[metrica][metodo] = df[metrica].values
 
     for metrica in metricas:
-        linhas_metricas = []
+        print('\n' + metrica.upper())
+        
         n_linhas = 9
-
-        melhor_linha = None
-        melhor_rank_total = float('inf')
+        all_ranks = []
 
         for i in range(n_linhas):
             valores = [dados_metodos[metrica][metodo][i] for metodo in metodos]
@@ -38,35 +40,20 @@ for dataset in datasets:
             else:
                 ranks = rankdata(-pd.Series(valores), method='min')  # maior = melhor
 
-            rank_MF_M = ranks[metodos.index("MF_M")]
-            rank_MF_V = ranks[metodos.index("MF_V")]
-            soma_rank = rank_MF_M + rank_MF_V
+            all_ranks.append(ranks)
 
-            if soma_rank < melhor_rank_total:
-                melhor_rank_total = soma_rank
-                melhor_linha = (valores, ranks)
-
-        # Formatar a linha com valores e rankings
-        valores, ranks = melhor_linha
-        linha_formatada = {
-            metodo: f"{valores[i]:.4f} ({int(ranks[i])}º)"
-            for i, metodo in enumerate(metodos)
-        }
-        tabelas_resultado[metrica][dataset] = linha_formatada
-
-import re
-
-# Criar DataFrames finais para cada métrica
-for metrica, dados in tabelas_resultado.items():
-    df_resultado = pd.DataFrame.from_dict(dados, orient='index')[metodos]
-
-    # Extrair apenas os rankings e calcular média
-    rankings_numericos = df_resultado.map(lambda x: int(re.search(r'\((\d+)º\)', x).group(1)))
-    medias = rankings_numericos.mean().round(2)
-
-    # Criar linha com as médias dos rankings
-    linha_media = {metodo: f"Média: {medias[metodo]:.2f}" for metodo in metodos}
-    df_resultado.loc["Média Ranking"] = linha_media
-
-    print(f"\n=== Resultado para {metrica.upper()} ===")
-    print(df_resultado)
+        for j, ranks in enumerate(all_ranks):
+            print(f'0.{j + 1}:', end=' ')
+            for i, rank in enumerate(ranks):
+                if rank == 1:
+                    colored_rank = f"\033[94m{int(rank)}\033[0m"
+                elif rank == 10:
+                    colored_rank = f"\033[91m{int(rank)}\033[0m"
+                else:    
+                    colored_rank = f"\033[93m{int(rank)}\033[0m"
+                
+                if rank == 10:
+                    print(f"{colored_rank} ({metodos[i]})", end=' ')
+                else:
+                    print(f"{colored_rank}  ({metodos[i]})", end=' ')
+            print('')
