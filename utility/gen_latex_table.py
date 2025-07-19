@@ -50,9 +50,9 @@ def format_latex_table_line(dataset_name, metric_name, percentage):
     return latex_line
 
 if __name__ == "__main__":
-    dataset_name = 'COIL20'
     metric_name = 'ari'
-    percentage = 0.9
+    dataset_name = 'Wine'
+    percentage = 0.8
 
     latex_row = format_latex_table_line(dataset_name, metric_name, percentage)
     print(latex_row)

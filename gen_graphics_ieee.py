@@ -22,8 +22,8 @@ y_labels = [
 ]
 
 label_map = {
-    'MF_M': 'MF-M', 'MF_V': 'MF-V', 'LS': 'Laplacian Score', 'MCFS': 'MCFS',
-    'UDFS': 'UDFS', 'DUFS': 'DUFS', 'VCSDFS': 'VCSDFS', 'FMIUFS': 'FMIUFS', 'Baseline': 'Baseline'
+    'MF_M': 'MF-M', 'MF_V': 'MF-V', 'LS': 'Laplacian Score', 'MCFS': 'MCFS', 'UDFS': 'UDFS',
+    'DUFS': 'DUFS', 'VCSDFS': 'VCSDFS', 'FMIUFS': 'FMIUFS', 'SRCFS': 'SRCFS', 'Baseline': 'Baseline'
 }
 
 def load_data(dataset_name):
@@ -37,6 +37,7 @@ def load_data(dataset_name):
         'DUFS': pd.read_csv(f'{path}/DUFS.csv'),
         'VCSDFS': pd.read_csv(f'{path}/VCSDFS.csv'),
         'FMIUFS': pd.read_csv(f'{path}/FMIUFS.csv'),
+        'SRCFS': pd.read_csv(f'{path}/SRCFS.csv'),
         'Baseline': pd.read_csv(f'{path}/BASELINE.csv'),
     }
 
@@ -103,8 +104,28 @@ def plot_metrics_together(x, dataset_name, dataset_label):
 
 if __name__ == "__main__":
     x = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    dataset_name = 'Zoo'
-    dataset_label = 'Zoo'
+    # dataset_label = 'AR10P'
+    # dataset_name = 'AR10P'
 
-    # plot_metrics_separately(x, dataset_name, dataset_label)
-    plot_metrics_together(x, dataset_name, dataset_label)
+    dataset_map = {
+        'AR10P': 'AR10P',
+        'COIL20': 'COIL20',
+        'Heart-Statlog': 'Heart Statlog',
+        'Ionosphere': 'Ionosphere',
+        'Lymphography': 'Lymphography',
+        'Madelon': 'Madelon',
+        'PIE10P': 'PIE10P',
+        'Scene': 'Scene',
+        'Sonar': 'Sonar',
+        'TOX171': 'TOX-171',
+        'WDBC': 'WDBC',
+        'Wine': 'Wine',
+        'Zoo': 'Zoo'
+    }
+
+    for dataset_name, dataset_label in dataset_map.items():
+        print(f"Metrics results for dataset: {dataset_label}")
+        plot_metrics_together(x, dataset_name, dataset_label)
+
+    # plot_metrics_separately(x, dataset_label, dataset_name)
+    # plot_metrics_together(x, dataset_label, dataset_name)
