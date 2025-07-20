@@ -36,21 +36,22 @@ for dataset in datasets:
             valores = [dados_metodos[metrica][metodo][i] for metodo in metodos]
             # Se for 'db', rank em ordem crescente (minimizar). Senão, decrescente (maximizar)
             if metrica == "db":
-                ranks = rankdata(pd.Series(valores), method='min')  # menor = melhor
+                ranks = rankdata(pd.Series(valores), method='average')  # menor = melhor
             else:
-                ranks = rankdata(-pd.Series(valores), method='min')  # maior = melhor
+                ranks = rankdata(-pd.Series(valores), method='average')  # maior = melhor
 
             all_ranks.append(ranks)
 
         for j, ranks in enumerate(all_ranks):
             print(f'0.{j + 1}:', end=' ')
             for i, rank in enumerate(ranks):
+                rank = int(rank) if rank.is_integer() else rank
                 if rank == 1:
-                    colored_rank = f"\033[94m{int(rank)}\033[0m"
+                    colored_rank = f"\033[94m{rank}\033[0m"
                 elif rank == 10:
-                    colored_rank = f"\033[91m{int(rank)}\033[0m"
+                    colored_rank = f"\033[91m{rank}\033[0m"
                 else:    
-                    colored_rank = f"\033[93m{int(rank)}\033[0m"
+                    colored_rank = f"\033[93m{rank}\033[0m"
                 
                 if rank == 10:
                     print(f"{colored_rank} ({metodos[i]})", end=' ')
