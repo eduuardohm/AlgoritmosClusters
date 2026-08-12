@@ -256,7 +256,7 @@ def atualizaTxt(nome, lista):
 if __name__ == "__main__":
 	mc = 5
 	nRep = 5
-	indexData = 6
+	indexData = 23
 	numVar = 1
 
 	# result, ref, centers = experiment(indexData, mc, nRep, numVar, 'mean')

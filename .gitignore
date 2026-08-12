@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Machine Learning
+*.pkl
+
+# Checkpoints
+checkpoints/
+models/
+
+# Datasets
+datasets/
+
+# Resultados e figuras geradas
+results/
+figures/

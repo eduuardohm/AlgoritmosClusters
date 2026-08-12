@@ -576,3 +576,14 @@ Silhoutte: 0.9415001835853932
 DB: 0.08249600137982026
 
 #################################################################
+
+Dataset: Spherical Gaussian Distribution - 3 Classes | N_samples: 210 | N_variaveis: 2 | N_clusters: 3
+Metodo: mean | MC: 5 | MFCM_Rep: 5 | Variaveis cortadas: 1
+
+Resultados do filtro:
+ARI: 1.0
+NMI: 1.0
+Silhoutte: 0.9425897931173527
+DB: 0.08091796484732154
+
+#################################################################
