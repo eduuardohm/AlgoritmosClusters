@@ -1,12 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utility.metrics import FR_Index
+from utils.metrics import FR_Index
 from sklearn.metrics import f1_score, davies_bouldin_score, silhouette_score, normalized_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
 import random
 import time
 
-from datasets.datasets import selectDataset
+from utils.load import load_dataset
 from algorithms.FCM import FCM
 from algorithms.MFCM import MFCM
 from algorithms.KMeans import KMeans
@@ -44,40 +44,6 @@ def execute(nRep, dataset, centersAll, exec_time):
 	# Retorna os centers de todas as iterações para o KMeans (mudar para criar uma nova lista exclusiva para o KMeans)
 	
 	return dict
-
-def exec_mfcm(indexData, mc, nRep, seed):
-
-	## Inicializando variáveis
-	exec_time = 0
-	result = {}
-	Jmin = 2147483647
-	centers = 0
-
-	## Monte Carlo
-	for i in range(mc):
-		np.random.seed(seed)
-		random.seed(seed)
-
-		synthetic = selectDataset(indexData)
-		dataset = synthetic[0]
-		ref = synthetic[1]
-		nClusters = synthetic[2]
-		dataName = synthetic[3]
-
-		centersMC = np.zeros((nRep, nClusters))
-
-		for c in range(nRep):
-			centersMC[c] = random.sample(range(1, len(dataset)), nClusters)
-
-		clustering = execute(nRep, dataset, centersMC, exec_time)
-		exec_time += clustering['exec_time']
-
-		if clustering['Jmin'] < Jmin:
-			Jmin = clustering['Jmin']
-			result = clustering
-			centers = clustering['best_centers']
-
-	return (result, exec_time, centers)
 
 def exec_kmeans(K, nRep, dataset, centers):
 
@@ -135,27 +101,27 @@ def experiment(indexData, mc, nRep, nVar, method):
 		np.random.seed(i + int(time.time()))
 		random.seed(i + int(time.time()))
 
-		synthetic = selectDataset(indexData)
-		dataset = synthetic[0]
-		ref = synthetic[1]
-		nClusters = synthetic[2]
-		dataName = synthetic[3]
+		synthetic = load_dataset(indexData)
+		dataset = synthetic.X
+		ref = synthetic.y
+		n_clusters = synthetic.n_clusters
+		dataName = synthetic.name
 		# parameters = synthetic[4]
 
 		i == 0 and print(f'Dataset escolhido: {dataName}')
 
-		centersMC = np.zeros((nRep, nClusters))
+		centersMC = np.zeros((nRep, n_clusters))
 
 		for c in range(nRep):
-			centersMC[c] = random.sample(range(1, len(dataset)), nClusters)
+			centersMC[c] = random.sample(range(1, len(dataset)), n_clusters)
 
 		mfcm_result = execute(nRep, dataset, centersMC, exec_time)
 		centers = mfcm_result['best_centers']
 		exec_time += mfcm_result['exec_time']
 		
-		filtered_data = run_filter(method, dataset, mfcm_result, nVar, nClusters)
+		filtered_data = run_filter(method, dataset, mfcm_result, nVar, n_clusters)
 
-		filtered_result, filtered_time = exec_kmeans(nClusters, nRep, filtered_data, centers)
+		filtered_result, filtered_time = exec_kmeans(n_clusters, nRep, filtered_data, centers)
 
 		metrics = calculate_accuracy(filtered_result, ref, None, filtered_data)
 
@@ -178,7 +144,7 @@ def experiment(indexData, mc, nRep, nVar, method):
 	print(f'Média Silhouette: {mean_silhouette}')
 	print(f'Média Davies-Bouldin: {mean_db}')
 
-	data_info = (f'\nDataset: {dataName} | N_samples: {len(dataset)} | N_variaveis: {len(dataset[0])} | N_clusters: {nClusters}\nMetodo: {method} | MC: {mc} | MFCM_Rep: {nRep} | Variaveis cortadas: {nVar}\n')
+	data_info = (f'\nDataset: {dataName} | N_samples: {len(dataset)} | N_variaveis: {len(dataset[0])} | N_clusters: {n_clusters}\nMetodo: {method} | MC: {mc} | MFCM_Rep: {nRep} | Variaveis cortadas: {nVar}\n')
 	metrics_info = (f'Resultados do filtro:\nARI: {mean_ari}\nNMI: {mean_nmi}\nSilhoutte: {mean_silhouette}\nDB: {mean_db}\n')
 	# parameters_info = (f'Parametros de distribuicao do dataset:\n{parameters}\n')
 
@@ -256,8 +222,7 @@ def atualizaTxt(nome, lista):
 if __name__ == "__main__":
 	mc = 5
 	nRep = 5
-	indexData = 23
+	indexData = 16
 	numVar = 1
 
-	# result, ref, centers = experiment(indexData, mc, nRep, numVar, 'mean')
 	result, ref, centers = experiment(indexData, mc, nRep, numVar, 'mean')
