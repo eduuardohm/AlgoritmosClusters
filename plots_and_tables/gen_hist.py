@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import scienceplots
 import ast  # Para converter as strings em listas de números
 from experiment import *
-from filters import *
+from proposed_methods.filters import *
 from datasets import selectDataset
 
 def skewness_coefficient(data):

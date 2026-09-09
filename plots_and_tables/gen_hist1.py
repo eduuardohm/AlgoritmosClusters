@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from experiment import *
-from filters import *
+from proposed_methods.filters import *
 from datasets import selectDataset
 
 def skewness_coefficient(data):

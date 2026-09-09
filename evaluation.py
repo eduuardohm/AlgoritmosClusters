@@ -1,28 +1,30 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
 import warnings
 from sklearn.cluster import KMeans
-from omegaconf import OmegaConf
-from torch.utils import data
 
-from methods.FSEM import Dash2002
-from methods.FSFS import feature_selection
-from methods.MAXVAR import maxVar
-from methods.LS import lap_score
-from methods.MCFS import mcfs
-from methods.UDFS import udfs
-from methods.VCSDFS import VCSDFS
-from methods.FMIUFS import ufs_FMI
-from methods.SRCFS import SRCFS
-import lscae
-# from methods.DUFS import Model, DataSet
+# Descomentar caso for rodar o LSCAE
+# import lscae
+# import torch
+# from omegaconf import OmegaConf
+# from torch.utils import data
+
+from literature_methods.FSEM import Dash2002
+from literature_methods.FSFS import feature_selection
+from literature_methods.MAXVAR import maxVar
+from literature_methods.LS import lap_score
+from literature_methods.MCFS import mcfs
+from literature_methods.UDFS import udfs
+from literature_methods.VCSDFS import VCSDFS
+from literature_methods.FMIUFS import ufs_FMI
+from literature_methods.SRCFS import SRCFS
+# from literature_methods.DUFS import Model, DataSet
 
 from timeit import default_timer as timer
 from datasets.datasets import selectDataset
-from utility.util import calculate_accuracy, run_filter
-from utility.exec_mfcm import exec_mfcm
+from utils.util import calculate_accuracy, run_filter
+from utils.exec_mfcm import exec_mfcm
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -102,38 +104,38 @@ def run_feature_selection(method, X, y, nclusters, p, n_features, result=None):
         
         return X[:, rankings[:numVar]]
     
-    elif method == 'lscae':
-        # Configurações do modelo
-        cfg = OmegaConf.create({
-            "input_dim": X.shape[1],    # Dimension of input dataset (total #features)
-            "k_selected": numVar,            # Number of selected features
-            "decoder_lr": 1e-3,         # Decoder learning rate
-            "selector_lr": 1e-1,        # Concrete layer learning rate
-            "min_lr": 1e-5,             # Minimal layer learning rate
-            "weight_decay": 0,          # l2 weight penalty
-            "batch_size": 64,           # Minibatch size
-            "hidden_dim": 128,          # Hidden layers size
-            "model": 'lscae',           # lscae | cae | ls
-            "scale_k": 2,               # Number of neighbors for computation of local scales for the kernel
-            "laplacian_k": 50,          # Number of neighbors of each pooint, used for computation of the Laplacian
-            "start_temp": 10,           # Initial temperature
-            "min_temp": 1e-2,           # Final temperature
-            "rec_lambda": .5,           # Balance between reconstruction and LS terms
-            "num_epochs": 300,          # Number of training epochs
-            "verbose": True             # Whether to print to console during training
-        })
+    # elif method == 'lscae':
+    #     # Configurações do modelo
+    #     cfg = OmegaConf.create({
+    #         "input_dim": X.shape[1],    # Dimension of input dataset (total #features)
+    #         "k_selected": numVar,            # Number of selected features
+    #         "decoder_lr": 1e-3,         # Decoder learning rate
+    #         "selector_lr": 1e-1,        # Concrete layer learning rate
+    #         "min_lr": 1e-5,             # Minimal layer learning rate
+    #         "weight_decay": 0,          # l2 weight penalty
+    #         "batch_size": 64,           # Minibatch size
+    #         "hidden_dim": 128,          # Hidden layers size
+    #         "model": 'lscae',           # lscae | cae | ls
+    #         "scale_k": 2,               # Number of neighbors for computation of local scales for the kernel
+    #         "laplacian_k": 50,          # Number of neighbors of each pooint, used for computation of the Laplacian
+    #         "start_temp": 10,           # Initial temperature
+    #         "min_temp": 1e-2,           # Final temperature
+    #         "rec_lambda": .5,           # Balance between reconstruction and LS terms
+    #         "num_epochs": 300,          # Number of training epochs
+    #         "verbose": True             # Whether to print to console during training
+    #     })
 
-        dataset = data.TensorDataset(torch.Tensor(X))
-        loader = data.DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
+    #     dataset = data.TensorDataset(torch.Tensor(X))
+    #     loader = data.DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
 
-        dataset = data.TensorDataset(torch.Tensor(X))
-        loader = torch.utils.data.DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
-        cfg.input_dim = X.shape[1]
+    #     dataset = data.TensorDataset(torch.Tensor(X))
+    #     loader = torch.utils.data.DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True, drop_last=True)
+    #     cfg.input_dim = X.shape[1]
 
-        lscae_model = lscae.Lscae(kwargs=cfg)
-        selected_features = lscae_model.select_features(loader)
-        selected_features = [int(x) for x in selected_features]
-        return X[:, selected_features]
+    #     lscae_model = lscae.Lscae(kwargs=cfg)
+    #     selected_features = lscae_model.select_features(loader)
+    #     selected_features = [int(x) for x in selected_features]
+    #     return X[:, selected_features]
 
     elif method == 'varfilter':
         return run_filter('mean', X, result, numVar, nclusters)
@@ -190,9 +192,6 @@ def evaluate(indexData, pVar, mc, nRep, seed, selected_method):
     return log, dataset_name
 
 if __name__ == '__main__':
-    # log_file = open('logs/evaluation_classic_methods.txt', 'a', newline='\n')
-    # log_file = open('logs/COIL20.txt', 'a', newline='\n')
-
     SEED = 42
     nRep = 100
     # datasets = [3, 4, 6, 7, 9, 11, 13, 14, 15, 19, 20, 26, 27, 28] # Todos os datasets que testamos

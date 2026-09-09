@@ -1,6 +1,6 @@
 from sklearn.metrics import davies_bouldin_score, silhouette_score, normalized_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from methods.filters import *
+from proposed_methods.filters import *
 
 def calculate_accuracy(L, ref, U, dataset):
 	ari = adjusted_rand_score(L, ref)

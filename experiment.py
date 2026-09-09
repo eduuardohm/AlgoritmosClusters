@@ -1,16 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.metrics import FR_Index
-from sklearn.metrics import f1_score, davies_bouldin_score, silhouette_score, normalized_mutual_info_score
+from sklearn.metrics import davies_bouldin_score, silhouette_score, normalized_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
 import random
 import time
 
 from utils.load import load_dataset
-from algorithms.FCM import FCM
 from algorithms.MFCM import MFCM
 from algorithms.KMeans import KMeans
-from methods.filters import *
+from proposed_methods.filters import *
 
 SEED = 42
 np.random.seed(SEED)

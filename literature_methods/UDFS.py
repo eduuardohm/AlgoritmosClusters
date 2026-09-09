@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 import math
-from utility.sparse_learning import generate_diagonal_matrix, calculate_l21_norm
+from utils.sparse_learning import generate_diagonal_matrix, calculate_l21_norm
 from sklearn.metrics.pairwise import pairwise_distances
 
 
